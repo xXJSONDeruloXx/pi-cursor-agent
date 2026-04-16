@@ -1,0 +1,43 @@
+{
+  "name": "pi-cursor-agent",
+  "version": "0.4.4-miyagi.1",
+  "description": "Cursor Agent provider extension for pi (Miyagi fork with added Opus 4.7 and corrected GPT-5.4 1M context windows)",
+  "type": "module",
+  "license": "MIT",
+  "author": "sudosubin (upstream), First American Miyagi team (fork)",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/dhimebauch_FirstAm/pi-cursor-agent.git"
+  },
+  "keywords": [
+    "pi",
+    "pi-coding-agent",
+    "pi-package",
+    "cursor",
+    "cursor-agent",
+    "cursor-cli"
+  ],
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "files": [
+    "src/**/*.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "1.10.0",
+    "@connectrpc/connect": "^1.7.0",
+    "@connectrpc/connect-node": "^1.7.0",
+    "yaml": "^2.8.0"
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-ai": ">=0.52.10",
+    "@mariozechner/pi-coding-agent": ">=0.52.10"
+  }
+}
