@@ -1,7 +1,7 @@
 {
   "name": "pi-cursor-agent",
-  "version": "0.4.4-miyagi.2",
-  "description": "Cursor Agent provider extension for pi (Miyagi fork: added Opus 4.7, corrected GPT-5.4 1M context, aggressive YOLO shell approval)",
+  "version": "0.4.4-miyagi.3",
+  "description": "Cursor Agent provider extension for pi (Miyagi fork: added Opus 4.7, corrected GPT-5.4 1M context, aggressive YOLO shell approval, input-token accounting for footer context %)",
   "type": "module",
   "license": "MIT",
   "author": "sudosubin (upstream), First American Miyagi team (fork)",

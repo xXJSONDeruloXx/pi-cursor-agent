@@ -13,6 +13,7 @@ Upstream `pi-cursor-agent` doesn't yet expose the latest Cursor model families t
 - Adds the **Claude Opus 4.7** family (`low`, `medium`, `high`, `xhigh`, `max`, each with thinking variants) — all 1M context.
 - Fixes **GPT-5.4** / **GPT-5.4 Fast** context window from 272k → 1M to match Cursor's displayed capacity.
 - **Aggressive YOLO shell approval**: `confirmIfDangerous` in `src/bridge/cursor-to-pi/executors/shell.ts` always returns `true`, so cursor-agent never opens a `ctx.ui.confirm` dialog for `sudo`, `rm -rf`, `curl | sh`, etc. Pi itself is a YOLO runtime and the extra prompt was pure friction for the Miyagi team. Flip the helper back to the upstream implementation if you want the safety net.
+- **Input-token accounting for Pi's footer**: Cursor's stream only reports a `token-delta` for output tokens, so upstream leaves `usage.input = 0` every turn and Pi's footer always reads `0.0%/<window>`. `estimateInputTokens()` in `src/provider/stream.ts` walks `context.systemPrompt`, `context.messages`, and `context.tools` with a chars/4 heuristic (matching `pi-coding-agent`'s `estimateTokens`) and sets `usage.input` before the first `start` event. The number is conservative but restores a meaningful context %/session-total display.
 
 Everything else mirrors upstream `pi-frontier/pi-cursor-agent`.
 
