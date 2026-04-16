@@ -7,7 +7,7 @@
   "author": "sudosubin (upstream), First American Miyagi team (fork)",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/dhimebauch_FirstAm/pi-cursor-agent.git"
+    "url": "git+https://github.com/xXJSONDeruloXx/pi-cursor-agent.git"
   },
   "keywords": [
     "pi",

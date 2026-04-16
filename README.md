@@ -26,7 +26,7 @@ pi install git:git@github.com:dhimebauch_FirstAm/pi-miyagi
 To install it directly without the rest of Miyagi:
 
 ```sh
-pi install git:git@github.com:dhimebauch_FirstAm/pi-cursor-agent
+pi install git:https://github.com/xXJSONDeruloXx/pi-cursor-agent
 ```
 
 ## Authentication
