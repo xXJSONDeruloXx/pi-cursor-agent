@@ -61,86 +61,6 @@ import {
 import { toCursorId } from "./model-mapping";
 import { type CursorStateStore, createOverlayState } from "./state";
 
-/**
- * Rough chars/4 token estimator for the input side of a turn.
- *
- * Cursor's streaming protocol only reports an output `token-delta`, so
- * `usage.input` would otherwise stay 0 every turn. Pi's footer computes
- * context % from the last assistant message's `usage.input`, which caused
- * it to always read `0.0%/<window>` between turns even as the session grew.
- *
- * This mirrors the heuristic in `@mariozechner/pi-coding-agent`'s
- * `estimateTokens` (chars / 4). It's conservative (tends to overestimate)
- * and costs microseconds, which is fine for a footer readout.
- */
-function estimateInputTokens(context: Context): number {
-  let chars = 0;
-
-  if (context.systemPrompt) {
-    chars += context.systemPrompt.length;
-  }
-
-  for (const message of context.messages) {
-    switch (message.role) {
-      case "user": {
-        if (typeof message.content === "string") {
-          chars += message.content.length;
-        } else {
-          for (const block of message.content) {
-            if (block.type === "text" && block.text) {
-              chars += block.text.length;
-            } else if (block.type === "image") {
-              // Match pi-coding-agent's heuristic: ~1200 tokens per image.
-              chars += 4800;
-            }
-          }
-        }
-        break;
-      }
-      case "assistant": {
-        for (const block of message.content) {
-          if (block.type === "text") {
-            chars += block.text.length;
-          } else if (block.type === "thinking") {
-            chars += block.thinking.length;
-          } else if (block.type === "toolCall") {
-            chars +=
-              block.name.length + JSON.stringify(block.arguments).length;
-          }
-        }
-        break;
-      }
-      case "toolResult": {
-        if (typeof message.content === "string") {
-          chars += (message.content as string).length;
-        } else {
-          for (const block of message.content) {
-            if (block.type === "text" && block.text) {
-              chars += block.text.length;
-            } else if (block.type === "image") {
-              chars += 4800;
-            }
-          }
-        }
-        break;
-      }
-    }
-  }
-
-  if (context.tools) {
-    for (const tool of context.tools) {
-      chars += tool.name.length + (tool.description?.length ?? 0);
-      try {
-        chars += JSON.stringify(tool.parameters).length;
-      } catch {
-        // Non-serializable schema: ignore, worst case we underestimate slightly.
-      }
-    }
-  }
-
-  return Math.ceil(chars / 4);
-}
-
 function createCheckpointHandler(
   handler: (checkpoint: ConversationStateStructure) => void,
 ): CheckpointHandler {
@@ -353,6 +273,17 @@ async function consumeUntilBoundary(
         break;
       }
 
+      case "token-details": {
+        // pi-miyagi fork: authoritative server-side usage snapshot. Cursor
+        // sends this every checkpoint (~once per turn boundary + during tool
+        // loops). Treat it as the source of truth and overwrite any earlier
+        // output-delta additions, since `usedTokens` already includes the
+        // model's own output so far in this generation.
+        output.usage.input = event.usedTokens;
+        output.usage.totalTokens = output.usage.input + output.usage.output;
+        break;
+      }
+
       case "cursor-done": {
         finalizeAllContent(contentState, output, stream);
         return { reason: "stop", tools: [] };
@@ -549,6 +480,18 @@ export function streamCursorAgent(
         );
         const checkpointHandler = createCheckpointHandler(
           (checkpoint: ConversationStateStructure) => {
+            // pi-miyagi fork: Cursor embeds authoritative token usage in every
+            // ConversationStateStructure checkpoint. Surface it to the turn
+            // loop so Pi's footer shows a real context %/window instead of the
+            // chars/4 estimate the upstream protocol forces us to guess.
+            const td = checkpoint.tokenDetails;
+            if (td && (td.usedTokens > 0 || td.maxTokens > 0)) {
+              channel.push({
+                kind: "token-details",
+                usedTokens: td.usedTokens,
+                maxTokens: td.maxTokens,
+              });
+            }
             void agentStore.handleCheckpoint(null, checkpoint);
           },
         );
@@ -591,10 +534,23 @@ export function streamCursorAgent(
       const usageState = { sawTokenDelta: false };
       let firstTokenTimeCaptured = false;
 
-      // Cursor's stream only reports output tokens. Estimate input tokens from
-      // the context we're sending so Pi's footer shows a real context %.
-      output.usage.input = estimateInputTokens(context);
-      output.usage.totalTokens = output.usage.input + output.usage.output;
+      // Prime usage.input from the last persisted checkpoint (if any) so the
+      // footer shows a realistic starting value *before* the first
+      // token-details event arrives for this turn. Without this, the first
+      // assistant message of every resumed turn would briefly read 0 tokens
+      // until Cursor streams a fresh checkpoint.
+      try {
+        const primingStore = await ensureAgentStore(sessionId);
+        const priorCheckpoint = primingStore.getConversationStateStructure();
+        const td = priorCheckpoint?.tokenDetails;
+        if (td && td.usedTokens > 0) {
+          output.usage.input = td.usedTokens;
+          output.usage.totalTokens = output.usage.input + output.usage.output;
+        }
+      } catch {
+        // Missing store / no prior checkpoint: just start at 0 and let the
+        // first streamed checkpoint fill it in.
+      }
 
       stream.push({ type: "start", partial: output });
 

@@ -4,6 +4,7 @@ export type ChannelEvent =
   | { kind: "content"; data: ContentEvent }
   | { kind: "tool-exec-request"; request: ToolExecRequest }
   | { kind: "token-delta"; tokens: number }
+  | { kind: "token-details"; usedTokens: number; maxTokens: number }
   | { kind: "cursor-done" };
 
 export interface ContentEvent {

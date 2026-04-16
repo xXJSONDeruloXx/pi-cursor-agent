@@ -100,11 +100,14 @@ const overrides = [
     maxTokens: 128000,
   },
   {
+    // Cursor's server reports a 200k window for the entire Opus 4.7 family
+    // (verified via ConversationTokenDetails.max_tokens on live sessions).
+    // The `-max` SKU unlocks higher compute / pricing, not more context.
     id: /^claude-opus-4-7-low$/,
     reasoning: true,
     input: ["text", "image"],
     cost: { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
-    contextWindow: 1000000,
+    contextWindow: 200000,
     maxTokens: 128000,
   },
   {
@@ -112,7 +115,7 @@ const overrides = [
     reasoning: true,
     input: ["text", "image"],
     cost: { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
-    contextWindow: 1000000,
+    contextWindow: 200000,
     maxTokens: 128000,
   },
   {
@@ -120,7 +123,7 @@ const overrides = [
     reasoning: true,
     input: ["text", "image"],
     cost: { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
-    contextWindow: 1000000,
+    contextWindow: 200000,
     maxTokens: 128000,
   },
   {
@@ -128,7 +131,7 @@ const overrides = [
     reasoning: true,
     input: ["text", "image"],
     cost: { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
-    contextWindow: 1000000,
+    contextWindow: 200000,
     maxTokens: 128000,
   },
   {
@@ -136,7 +139,7 @@ const overrides = [
     reasoning: true,
     input: ["text", "image"],
     cost: { input: 30, output: 150, cacheRead: 3, cacheWrite: 37.5 },
-    contextWindow: 1000000,
+    contextWindow: 200000,
     maxTokens: 128000,
   },
   {
@@ -236,11 +239,14 @@ const overrides = [
     maxTokens: 32000,
   },
   {
+    // Cursor exposes GPT-5.4 at 272k (verified via ConversationTokenDetails.
+    // max_tokens). OpenAI quotes 400k; the Cursor-enforced number is what we
+    // should surface so Pi's footer matches the real compaction boundary.
     id: /^gpt-5\.4$/,
     reasoning: true,
     input: ["text", "image"],
     cost: { input: 2.5, output: 15, cacheRead: 0.25, cacheWrite: 0 },
-    contextWindow: 1000000,
+    contextWindow: 272000,
     maxTokens: 128000,
   },
   {
@@ -248,7 +254,7 @@ const overrides = [
     reasoning: true,
     input: ["text", "image"],
     cost: { input: 5, output: 30, cacheRead: 0.5, cacheWrite: 0 },
-    contextWindow: 1000000,
+    contextWindow: 272000,
     maxTokens: 128000,
   },
   {
