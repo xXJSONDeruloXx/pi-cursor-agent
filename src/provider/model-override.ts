@@ -100,9 +100,10 @@ const overrides = [
     maxTokens: 128000,
   },
   {
-    // Cursor's server reports a 200k window for the entire Opus 4.7 family
-    // (verified via ConversationTokenDetails.max_tokens on live sessions).
-    // The `-max` SKU unlocks higher compute / pricing, not more context.
+    // Cursor's context window depends on whether ModelDetails.max_mode is set
+    // on the wire (see request-builder.ts). Non-max Opus 4.7 SKUs stay at
+    // the 200k default; the -max SKU opts into Max Mode and unlocks 1M.
+    // Verified via ConversationTokenDetails.max_tokens on live sessions.
     id: /^claude-opus-4-7-low$/,
     reasoning: true,
     input: ["text", "image"],
@@ -139,7 +140,7 @@ const overrides = [
     reasoning: true,
     input: ["text", "image"],
     cost: { input: 30, output: 150, cacheRead: 3, cacheWrite: 37.5 },
-    contextWindow: 200000,
+    contextWindow: 1000000,
     maxTokens: 128000,
   },
   {
@@ -239,9 +240,9 @@ const overrides = [
     maxTokens: 32000,
   },
   {
-    // Cursor exposes GPT-5.4 at 272k (verified via ConversationTokenDetails.
-    // max_tokens). OpenAI quotes 400k; the Cursor-enforced number is what we
-    // should surface so Pi's footer matches the real compaction boundary.
+    // Cursor enforces 272k for gpt-5.4 without Max Mode; opting into Max Mode
+    // lifts it to ~922k, but we don't currently expose a `-max` SKU for this
+    // family. Keep the footer honest for what users actually get (272k).
     id: /^gpt-5\.4$/,
     reasoning: true,
     input: ["text", "image"],

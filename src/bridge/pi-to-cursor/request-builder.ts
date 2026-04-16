@@ -301,10 +301,15 @@ export function buildRunRequest(
           readPaths: [],
         });
 
+  // pi-miyagi fork: Cursor's Max Mode is an explicit boolean on the request,
+  // not a rename. The `-max` model ids we expose imply Max Mode (1M for Opus
+  // 4.7, ~922k for GPT-5.4). Upstream always sent maxMode=false, which
+  // silently capped `-max` SKUs at their base window (200k / 272k).
   const modelDetails = new ModelDetails({
     modelId: params.model.id,
     displayModelId: params.model.id,
     displayName: params.model.name,
+    maxMode: /-max$/.test(params.model.id),
   });
 
   const mcpToolDefinitions = params.mcpToolDefinitions ?? [];
