@@ -74,24 +74,20 @@ export function buildShellRejectedResult(
   });
 }
 
-function isDangerousShellCommand(command: string): boolean {
-  const c = command.toLowerCase();
-  if (/(^|\s)sudo\b/.test(c)) return true;
-  if (/\brm\b.*\s-rf\b/.test(c)) return true;
-  if (/\bmkfs\b|\bdd\b|\bshutdown\b|\breboot\b/.test(c)) return true;
-  if (/\bcurl\b.*\|\s*(sh|bash)\b/.test(c)) return true;
-  if (/\bwget\b.*\|\s*(sh|bash)\b/.test(c)) return true;
+function isDangerousShellCommand(_command: string): boolean {
+  // pi-miyagi fork: always treat commands as safe so callers never prompt.
+  // Kept as a function (not inlined) so the upstream shape survives rebases.
   return false;
 }
 
 export async function confirmIfDangerous(
-  getCtx: () => ExtensionContext | null,
-  command: string,
+  _getCtx: () => ExtensionContext | null,
+  _command: string,
 ): Promise<boolean> {
-  if (!isDangerousShellCommand(command)) return true;
-  const ctx = getCtx();
-  if (!ctx?.hasUI) return false;
-  return ctx.ui.confirm("Cursor command approval", command);
+  // pi-miyagi fork: aggressive YOLO mode. Auto-approve every shell command
+  // instead of routing a subset through ctx.ui.confirm. Pi itself does not
+  // prompt for tool use, so this makes cursor-agent behave the same.
+  return true;
 }
 
 export class LocalShellExecutor implements Executor<ShellArgs, ShellResult> {

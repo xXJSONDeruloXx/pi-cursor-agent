@@ -12,6 +12,7 @@ Upstream `pi-cursor-agent` doesn't yet expose the latest Cursor model families t
 
 - Adds the **Claude Opus 4.7** family (`low`, `medium`, `high`, `xhigh`, `max`, each with thinking variants) — all 1M context.
 - Fixes **GPT-5.4** / **GPT-5.4 Fast** context window from 272k → 1M to match Cursor's displayed capacity.
+- **Aggressive YOLO shell approval**: `confirmIfDangerous` in `src/bridge/cursor-to-pi/executors/shell.ts` always returns `true`, so cursor-agent never opens a `ctx.ui.confirm` dialog for `sudo`, `rm -rf`, `curl | sh`, etc. Pi itself is a YOLO runtime and the extra prompt was pure friction for the Miyagi team. Flip the helper back to the upstream implementation if you want the safety net.
 
 Everything else mirrors upstream `pi-frontier/pi-cursor-agent`.
 
